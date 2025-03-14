@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToDo List App</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0/themes.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="h-dvh flex flex-col justify-between" data-theme="retro">
+    <header class="text-center text-2xl p-4 font-mono italic">
+        <h1 class=" font-bold text-4xl">~ ToDo List ~</h1>
+        <p>Merhaba, Liste oluşturma sayfamıza Hoşgeldiniz !</p>
+    </header>
+    <!-- <nav class="bg-orange-500">NAv</nav> -->
+    <main class=" flex justify-center items-center flex-1 pl-10 pr-10">
+        <div class="w-full max-w-2xl p-5 ">
+            <div class="mb-5 bg-gray-600 p-4 rounded-xl shadow hover:shadow-xl">
+                <input id="listeAdi" type="text" placeholder="Yeni liste adı..."
+                    class="input input-warning w-full p-2 text-black rounded-xl hover:bg-yellow-400">
+                <button onclick="createList()"
+                    class=" w-full bg-yellow-800 text-white mt-2 p-2 rounded-xl hover:bg-yellow-600 ">Yeni Liste Oluştur
+                    ! </button>
+            </div>
+
+            <div id="listeleriGor"></div>
+            <div></div>
+        </div>
+
+    </main>
+    <footer class=" p-5">2025 © Tüm Hakları Saklıdır. <br> Bu site <a class="font-bold"
+            href="https://www.linkedin.com/in/enesyilmaz1/">Enes
+            YILMAZ</a> tarafından hazırlanmıştır. <br> Malatya Türkiye </footer>
+
+    <script>
+
+        // 1.GİRİŞ -- ID'li elemanların alınması ve değişkenlerin tanımlanması
+
+        const listNameInput = document.getElementById("listeAdi");
+        const listContainer = document.getElementById("listeleriGor");
+        const createListBtn = document.getElementById("createListBtn");
+
+        // Tüm listeleri tutan nesne
+        let lists = {};
+
+        // 2.Gelişme - Eventlerin bağlanması ve Fonksiyonların tanımlanması
+        // 2.1. Listeleme - Tüm Listeleri Ekrana Basma Fonksiyonu
+        function printLists() {
+            listContainer.innerHTML = "";        // Önce eski içerikleri temizle
+
+            for (let listName in lists) {
+                // 2.1.1.Liste Kartını Oluştur
+                const listCard = document.createElement("div");
+                listCard.className = "bg-gray-600 p-4 mb-5 rounded-xl shadow hover:shadow-xl";
+
+                // 2.1.2.Liste başlığı Ekle
+                const title = document.createElement("h3");
+                title.className = "text-xl font-bold text-white";
+                title.innerText = listName;
+                listCard.appendChild(title);
+
+                // 2.1.3. Liste öğeleri için container
+                const itemList = document.createElement("ul");
+                itemList.className = "mt-2";
+
+                // 2.1.4. Mevcut liste öğelerini ekrana ekle
+                lists[listName].forEach((item, index) => {
+                    const listItem = document.createElement("li");
+                    listItem.className = "flex justify-between items-center p-2 bg-gray-800 text-white rounded-lg mt-1";
+
+                    // Öğenin metni
+                    const itemText = document.createElement("span");
+                    itemText.innerText = item;
+                    listItem.appendChild(itemText);
+
+                    // Butonlar için div
+                    const buttonContainer = document.createElement("div");
+                    buttonContainer.className = "flex gap-2";
+
+                    // Tamamlandı butonu
+                    const completeButton = document.createElement("button");
+                    completeButton.className = "bg-green-600 text-white px-2 py-1 rounded-lg hover:bg-green-800";
+                    completeButton.innerText = "Tamamlandı";
+                    completeButton.onclick = () => toggleComplete(itemText);
+                    buttonContainer.appendChild(completeButton);
+
+                    // Silme butonu
+                    const deleteButton = document.createElement("button");
+                    deleteButton.className = "bg-red-600 text-white px-2 py-1 rounded-lg hover:bg-red-800";
+                    deleteButton.innerText = "Sil";
+                    deleteButton.onclick = () => removeItem(listName, index);
+                    buttonContainer.appendChild(deleteButton);
+
+                    listItem.appendChild(buttonContainer);
+                    itemList.appendChild(listItem);
+                });
+
+                listCard.appendChild(itemList);
+
+                // 2.1.5. Yeni öge ekleme Alanı
+                const input = document.createElement("input");
+                input.className = "input input-warning text-black w-full p-2 mt-2 rounded-xl hover:bg-yellow-900";
+                input.placeholder = "Yeni öğe ekleyin...";
+                input.id = `input-${listName}`;
+                listCard.appendChild(input);
+
+                const addButton = document.createElement("button");
+                addButton.className = "w-full bg-yellow-900 text-white mt-2 p-2 rounded-xl hover:bg-yellow-700";
+                addButton.innerText = "Öğe Ekle";
+                addButton.onclick = () => addItem(listName);
+                listCard.appendChild(addButton);
+
+                // 2.1.6. Listeyi Silme Butonu ekle
+                const deleteListButton = document.createElement("button");
+                deleteListButton.className = "w-full bg-red-700 text-white mt-2 p-2 rounded-xl hover:bg-red-900";
+                deleteListButton.innerText = "Listeyi Sil";
+                deleteListButton.onclick = () => deleteList(listName);
+                listCard.appendChild(deleteListButton);
+
+                listContainer.appendChild(listCard);
+            }
+        }
+
+        /// 2.2. Liste Ekleme - Yeni bir liste oluşturma fonksiyonu
+        function createList() {
+            const listName = listNameInput.value.trim();
+
+            if (listName === "") {
+                alert("Lütfen liste adını boş bırakmayınız !");
+                return;
+            }
+
+            if (lists[listName]) {
+                alert("Bu isimde bir liste zaten mevcut !");
+                return;
+            }
+
+            lists[listName] = [];
+            printLists();
+            listNameInput.value = "";
+        }
+
+        // 2.3. Öğeleri ekleme - Listeye öge ekleme fonksiyonu
+        function addItem(listName) {
+            const input = document.getElementById(`input-${listName}`);
+            const itemText = input.value.trim();
+
+            if (itemText === "") {
+                alert("Lütfen Öğe Adını boş bırakmayınız !");
+                return;
+            }
+
+            lists[listName].push(itemText);
+            printLists();
+            input.value = "";
+        }
+
+        // 2.4. Silme -- öğeyi silme fonksiyonu
+        function removeItem(listName, itemIndex) {
+            lists[listName].splice(itemIndex, 1);
+            printLists();
+        }
+
+        //  2.5. Listeyi silme fonksiyonu
+        function deleteList(listName) {
+            delete lists[listName];
+            printLists();
+        }
+
+        // 2.6. Tamamlandı işareti
+        function toggleComplete(itemText) {
+            itemText.classList.toggle("line-through");
+            itemText.classList.toggle("opacity-50");
+        }
+
+        // 2.7. Event Listener Ekleme
+        createListBtn.addEventListener("click", createList);
+    </script>
+
+</body>
+
+</html>
